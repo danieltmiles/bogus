@@ -4,9 +4,12 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/gorilla/mux"
 )
 
 type Bogus struct {
+	router  *mux.Router
 	server  *httptest.Server
 	hits    int
 	payload string
@@ -39,11 +42,14 @@ func (b *Bogus) SetStatus(s int) {
 }
 
 func (b *Bogus) Start() {
-	b.server = httptest.NewServer(
+	b.router = mux.NewRouter()
+	b.router.Path("/").HandlerFunc(
 		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(b.status)
 				b.hits++
 				w.Write([]byte(b.payload))
 			}))
+
+	b.server = httptest.NewServer(b.router)
 }
